@@ -14,46 +14,48 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
             min-height: 100vh;
-            padding: 20px;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            background: #121212;
+            min-height: 100vh;
         }
 
         header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+            border-bottom: 1px solid #2a2a2a;
             padding: 40px;
-            text-align: center;
         }
 
         h1 {
-            font-size: 2.5em;
+            font-size: 2.8em;
             margin-bottom: 10px;
             font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
+            font-size: 1.1em;
+            color: #888;
+            font-weight: 400;
         }
 
         .controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
-            padding: 30px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
+            padding: 30px 40px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
         }
 
         .control-group {
@@ -64,93 +66,99 @@
         label {
             font-weight: 600;
             margin-bottom: 8px;
-            color: #495057;
-            font-size: 0.9em;
+            color: #b0b0b0;
+            font-size: 0.8em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
 
         select, input[type="range"] {
-            padding: 10px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: all 0.3s;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            background: #0f0f0f;
+            color: #e0e0e0;
         }
 
         select:focus, input[type="range"]:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
         }
 
         select {
-            background: white;
             cursor: pointer;
         }
 
         .range-value {
             display: inline-block;
-            background: #667eea;
-            color: white;
+            background: #2a2a2a;
+            color: #4a9eff;
             padding: 4px 12px;
-            border-radius: 12px;
+            border-radius: 4px;
             font-size: 0.85em;
-            font-weight: 600;
+            font-weight: 700;
             margin-left: 10px;
+            border: 1px solid #333;
         }
 
         .content {
-            padding: 30px;
+            padding: 40px;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            transition: all 0.3s;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
+            border-color: #4a9eff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(74, 158, 255, 0.1);
         }
 
         .stat-label {
-            font-size: 0.85em;
-            opacity: 0.9;
-            margin-bottom: 8px;
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 12px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            font-weight: 600;
         }
 
         .stat-value {
-            font-size: 2em;
+            font-size: 2.5em;
             font-weight: 700;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
         }
 
         .chart-container {
-            margin: 30px 0;
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin: 40px 0;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 30px;
         }
 
         .section-title {
-            font-size: 1.5em;
+            font-size: 1.4em;
             font-weight: 700;
-            margin-bottom: 20px;
-            color: #212529;
-            border-left: 4px solid #667eea;
+            margin-bottom: 25px;
+            color: #fff;
+            border-left: 3px solid #4a9eff;
             padding-left: 15px;
         }
 
@@ -158,123 +166,167 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin-top: 20px;
             font-size: 0.9em;
         }
 
         th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #0f0f0f;
+            color: #b0b0b0;
             padding: 15px;
             text-align: left;
             font-weight: 600;
-            position: sticky;
-            top: 0;
-        }
-
-        th:first-child {
-            border-top-left-radius: 10px;
-        }
-
-        th:last-child {
-            border-top-right-radius: 10px;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #2a2a2a;
         }
 
         td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e9ecef;
+            padding: 14px 15px;
+            border-bottom: 1px solid #222;
+            color: #d0d0d0;
         }
 
         tbody tr:hover {
-            background: #f8f9fa;
+            background: #1f1f1f;
         }
 
         .table-container {
-            max-height: 500px;
+            max-height: 600px;
             overflow-y: auto;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-radius: 6px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #0f0f0f;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 5px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #444;
         }
 
         .loading {
             text-align: center;
             padding: 50px;
-            font-size: 1.2em;
-            color: #6c757d;
+            font-size: 1.1em;
+            color: #666;
         }
 
         .info-box {
-            background: #e7f3ff;
-            border-left: 4px solid #2196F3;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
+            background: #1a1a1a;
+            border-left: 3px solid #4a9eff;
+            padding: 25px;
+            border-radius: 6px;
+            margin: 30px 0;
+            border: 1px solid #2a2a2a;
         }
 
         .info-box h3 {
-            color: #1976D2;
-            margin-bottom: 10px;
+            color: #4a9eff;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .info-box p {
+            color: #b0b0b0;
+            line-height: 1.7;
+        }
+
+        .info-box a {
+            color: #4a9eff;
+            text-decoration: none;
+            border-bottom: 1px solid #4a9eff;
+        }
+
+        .info-box a:hover {
+            color: #6bb3ff;
         }
 
         footer {
-            background: #212529;
-            color: white;
-            padding: 20px;
+            background: #0f0f0f;
+            border-top: 1px solid #2a2a2a;
+            padding: 30px;
             text-align: center;
-            font-size: 0.9em;
+            color: #666;
+        }
+
+        footer p {
+            margin: 8px 0;
+        }
+
+        /* Plotly customization */
+        .js-plotly-plot .plotly .modebar {
+            background: rgba(26, 26, 26, 0.9) !important;
+        }
+
+        .js-plotly-plot .plotly .modebar-btn {
+            color: #888 !important;
+        }
+
+        .js-plotly-plot .plotly .modebar-btn:hover {
+            color: #4a9eff !important;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🌍 MF-7a: Exploración de Datos MFA</h1>
-            <p class="subtitle">Análisis de Flujos de Materiales (Material Flow Analysis) 1970-2024</p>
+            <h1>MF-7a: Exploración de Datos</h1>
+            <p class="subtitle">Material Flow Analysis | Unión Europea & Mercosur 1970-2024</p>
         </header>
 
         <div class="controls">
             <div class="control-group">
-                <label for="regionSelect">🌎 Región</label>
+                <label for="regionSelect">Región</label>
                 <select id="regionSelect">
                     <option value="UE">Unión Europea</option>
                     <option value="Mercosur" selected>Mercosur</option>
-                    <option value="Ambos">Ambos</option>
-                    <option value="Países">Países personalizados</option>
+                    <option value="Ambos">Ambas regiones</option>
                 </select>
             </div>
 
             <div class="control-group">
-                <label for="flowSelect">📊 Indicador (Flow)</label>
+                <label for="flowSelect">Indicador (Flow)</label>
                 <select id="flowSelect">
                     <option value="loading">Cargando...</option>
                 </select>
             </div>
 
             <div class="control-group">
-                <label for="yearStart">📅 Año Inicio <span class="range-value" id="yearStartValue">1970</span></label>
+                <label for="yearStart">Año Inicio <span class="range-value" id="yearStartValue">1970</span></label>
                 <input type="range" id="yearStart" min="1970" max="2023" value="1970" step="1">
             </div>
 
             <div class="control-group">
-                <label for="yearEnd">📅 Año Fin <span class="range-value" id="yearEndValue">2024</span></label>
+                <label for="yearEnd">Año Fin <span class="range-value" id="yearEndValue">2024</span></label>
                 <input type="range" id="yearEnd" min="1971" max="2024" value="2024" step="1">
             </div>
         </div>
 
         <div class="content">
             <div class="info-box">
-                <h3>ℹ️ Acerca de este notebook</h3>
-                <p><strong>MF-7a</strong> es la primera parte del análisis de Material Flow Analysis (MFA). Aquí puedes explorar los datos básicos, seleccionar regiones y períodos de tiempo, y ver estadísticas descriptivas.</p>
-                <p style="margin-top: 10px;"><strong>Navegación:</strong> MF-7a (Exploración) → MF-7b (Visualizaciones) → MF-7c (Análisis Tapio)</p>
+                <h3>Acerca de este notebook</h3>
+                <p><strong>MF-7a</strong> permite explorar los datos fundamentales del análisis de Material Flow. Filtra por región, indicador y período temporal para obtener estadísticas descriptivas y visualizaciones básicas.</p>
+                <p style="margin-top: 12px;"><strong>Navegación:</strong> <strong>MF-7a (Exploración)</strong> → <a href="../MF-7b/">MF-7b (Visualizaciones)</a> → <a href="../MF-7c/">MF-7c (Análisis Tapio)</a></p>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Países seleccionados</div>
+                    <div class="stat-label">Países</div>
                     <div class="stat-value" id="statCountries">-</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Años de datos</div>
+                    <div class="stat-label">Años</div>
                     <div class="stat-value" id="statYears">-</div>
                 </div>
                 <div class="stat-card">
@@ -288,12 +340,22 @@
             </div>
 
             <div class="chart-container">
-                <h2 class="section-title">📈 Distribución de valores</h2>
-                <div id="histogramChart"></div>
+                <h2 class="section-title">Evolución temporal agregada</h2>
+                <div id="timeSeriesChart"></div>
             </div>
 
             <div class="chart-container">
-                <h2 class="section-title">📋 Tabla de datos filtrados</h2>
+                <h2 class="section-title">Distribución estadística</h2>
+                <div id="boxPlotChart"></div>
+            </div>
+
+            <div class="chart-container">
+                <h2 class="section-title">Comparación entre países (Top 10)</h2>
+                <div id="barChart"></div>
+            </div>
+
+            <div class="chart-container">
+                <h2 class="section-title">Datos filtrados</h2>
                 <div class="table-container">
                     <table id="dataTable">
                         <thead>
@@ -301,7 +363,7 @@
                                 <th>País</th>
                                 <th>Año</th>
                                 <th>Indicador</th>
-                                <th>Valor</th>
+                                <th style="text-align: right;">Valor</th>
                                 <th>Unidad</th>
                             </tr>
                         </thead>
@@ -314,8 +376,8 @@
         </div>
 
         <footer>
-            <p>MF-7a: Exploración de Datos MFA | Material Flow Analysis 1970-2024</p>
-            <p style="margin-top: 5px; opacity: 0.8;">Datos de Unión Europea y Mercosur</p>
+            <p><strong>MF-7a</strong> | Material Flow Analysis</p>
+            <p>Datos: Unión Europea & Mercosur | 1970-2024</p>
         </footer>
     </div>
 
