@@ -1,4 +1,5 @@
-// MF-7b: Visualizaciones de Series Temporales - JavaScript
+// MF-7b: Paneles Apilados - JavaScript (Professional Edition)
+// Small multiples con escala Y compartida estilo Observable
 
 const BLOCS = {
     "UE": [
@@ -10,12 +11,6 @@ const BLOCS = {
     ],
     "Mercosur": ["Argentina", "Brazil", "Uruguay", "Paraguay"]
 };
-
-const COLORS = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F',
-    '#BB8FCE', '#85C1E2', '#F8B195', '#C06C84', '#6C5B7B', '#355C7D',
-    '#99B898', '#FECEAB', '#FF847C', '#E84A5F', '#2A363B', '#A8E6CF'
-];
 
 let rawData = [];
 let selectedCountries = [];
@@ -37,7 +32,21 @@ const elements = {
     chartsContainer: document.getElementById('chartsContainer')
 };
 
-// Cargar datos
+// Theme profesional oscuro
+const PLOTLY_THEME = {
+    plot_bgcolor: '#1a1a1a',
+    paper_bgcolor: '#1a1a1a',
+    font: { color: '#e0e0e0', family: 'Inter, sans-serif', size: 11 },
+    xaxis: { gridcolor: '#2a2a2a', zerolinecolor: '#3a3a3a', showticklabels: true },
+    yaxis: { gridcolor: '#2a2a2a', zerolinecolor: '#3a3a3a' }
+};
+
+const PLOTLY_CONFIG = {
+    responsive: true,
+    displayModeBar: false,
+    displaylogo: false
+};
+
 async function loadData() {
     try {
         const response = await fetch('mfa_data.csv');
@@ -70,7 +79,7 @@ async function loadData() {
         updateData();
     } catch (error) {
         console.error('Error:', error);
-        elements.chartsContainer.innerHTML = '<p style="color:red;">Error cargando datos</p>';
+        elements.chartsContainer.innerHTML = '<p style="color:#ff4444; text-align:center; padding:40px;">Error cargando datos</p>';
     }
 }
 
@@ -100,14 +109,12 @@ function initializeUI() {
         `<option value="${f}"${f === 'MF' ? ' selected' : ''}>${f}</option>`
     ).join('');
 
-    // Event listeners
-    elements.regionSelect.addEventListener('change', () => {
-        updateCountries();
-        updateData();
+    [elements.regionSelect, elements.flowSelect, elements.normalizeMode, elements.sortMode].forEach(el => {
+        el.addEventListener('change', () => {
+            if (el === elements.regionSelect) updateCountries();
+            updateData();
+        });
     });
-    elements.flowSelect.addEventListener('change', updateData);
-    elements.normalizeMode.addEventListener('change', updateData);
-    elements.sortMode.addEventListener('change', updateData);
 
     elements.smoothing.addEventListener('input', () => {
         elements.smoothingValue.textContent = elements.smoothing.value;
@@ -135,7 +142,7 @@ function updateCountries() {
         selectedCountries = BLOCS.UE.filter(c => rawData.some(d => d.country === c));
     } else if (region === 'Mercosur') {
         selectedCountries = BLOCS.Mercosur.filter(c => rawData.some(d => d.country === c));
-    } else if (region === 'Ambos') {
+    } else {
         selectedCountries = [...BLOCS.UE, ...BLOCS.Mercosur].filter(c =>
             rawData.some(d => d.country === c)
         );
@@ -184,9 +191,8 @@ function updateData() {
     const maxPanels = parseInt(elements.maxPanels.value);
     const limitedCountries = sortedCountries.slice(0, maxPanels);
 
-    // Renderizar
-    renderGlobalChart(limitedCountries);
-    renderCountryPanels(limitedCountries);
+    // Renderizar con escala compartida
+    renderStackedPanels(limitedCountries, normalizeMode);
 }
 
 function applySmoothing(values, window) {
@@ -260,76 +266,67 @@ function sortCountries(seriesByCountry) {
     }
 }
 
-function renderGlobalChart(countriesData) {
-    const traces = countriesData.map(([country, series], idx) => ({
-        x: series.years,
-        y: series.values,
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: country,
-        line: {
-            width: 2,
-            color: COLORS[idx % COLORS.length]
-        },
-        marker: {
-            size: 4
+// Calcular escala Y compartida (clave para small multiples)
+function calculateSharedYRange(countriesData, normalizeMode) {
+    let globalMin = Infinity;
+    let globalMax = -Infinity;
+
+    countriesData.forEach(([country, series]) => {
+        const finite = series.values.filter(Number.isFinite);
+        if (finite.length > 0) {
+            const localMin = Math.min(...finite);
+            const localMax = Math.max(...finite);
+            if (localMin < globalMin) globalMin = localMin;
+            if (localMax > globalMax) globalMax = localMax;
         }
-    }));
+    });
 
-    const normalizeMode = elements.normalizeMode.value;
-    let yaxisTitle = currentUnit;
-    if (normalizeMode === 'index100') yaxisTitle = 'Índice (base=100)';
-    else if (normalizeMode === 'zscore') yaxisTitle = 'Z-score';
-    else if (normalizeMode === 'minmax') yaxisTitle = 'Valor normalizado (0-1)';
+    if (!Number.isFinite(globalMin) || !Number.isFinite(globalMax)) {
+        return null;
+    }
 
-    const layout = {
-        title: {
-            text: 'Comparación de todos los países',
-            font: { size: 20, weight: 700 }
-        },
-        xaxis: {
-            title: 'Año',
-            gridcolor: '#e9ecef'
-        },
-        yaxis: {
-            title: yaxisTitle,
-            gridcolor: '#e9ecef'
-        },
-        plot_bgcolor: '#f8f9fa',
-        paper_bgcolor: 'white',
-        height: 500,
-        legend: {
-            orientation: 'v',
-            x: 1.02,
-            y: 1
-        },
-        hovermode: 'x unified'
-    };
+    // Para z-score, usar rango simétrico
+    if (normalizeMode === 'zscore') {
+        const absMax = Math.max(Math.abs(globalMin), Math.abs(globalMax));
+        return [-absMax * 1.1, absMax * 1.1];
+    }
 
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
-
-    Plotly.newPlot('globalChart', traces, layout, config);
+    // Para otros, agregar padding
+    const padding = (globalMax - globalMin) * 0.05 || 1;
+    return [globalMin - padding, globalMax + padding];
 }
 
-function renderCountryPanels(countriesData) {
-    const normalizeMode = elements.normalizeMode.value;
+function renderStackedPanels(countriesData, normalizeMode) {
+    if (countriesData.length === 0) {
+        elements.chartsContainer.innerHTML = '<div class="loading">No hay datos para mostrar</div>';
+        return;
+    }
+
+    elements.chartsContainer.innerHTML = '';
+
+    // Calcular rango Y compartido
+    const sharedYRange = calculateSharedYRange(countriesData, normalizeMode);
+
+    // Determinar título del eje Y
     let yaxisTitle = currentUnit;
     if (normalizeMode === 'index100') yaxisTitle = 'Índice (base=100)';
     else if (normalizeMode === 'zscore') yaxisTitle = 'Z-score';
     else if (normalizeMode === 'minmax') yaxisTitle = 'Normalizado (0-1)';
 
-    elements.chartsContainer.innerHTML = '';
-
+    // Renderizar cada panel
     countriesData.forEach(([country, series], idx) => {
         const panel = document.createElement('div');
         panel.className = 'country-panel';
+
+        const lastValue = series.values.filter(Number.isFinite).pop();
+        const rank = `#${idx + 1} | Último: ${lastValue?.toFixed(1) || 'N/A'}`;
+
         panel.innerHTML = `
-            <div class="country-title">${country}</div>
-            <div id="chart-${idx}"></div>
+            <div class="country-title">
+                <span>${country}</span>
+                <span class="country-rank">${rank}</span>
+            </div>
+            <div id="chart-${idx}" class="chart-container"></div>
         `;
         elements.chartsContainer.appendChild(panel);
 
@@ -337,41 +334,35 @@ function renderCountryPanels(countriesData) {
             x: series.years,
             y: series.values,
             type: 'scatter',
-            mode: 'lines+markers',
+            mode: 'lines',
             line: {
-                width: 3,
-                color: COLORS[idx % COLORS.length]
-            },
-            marker: {
-                size: 6,
-                color: COLORS[idx % COLORS.length]
+                width: 2,
+                color: '#4a9eff'
             },
             fill: 'tozeroy',
-            fillcolor: COLORS[idx % COLORS.length] + '30'
+            fillcolor: 'rgba(74, 158, 255, 0.15)',
+            hovertemplate: `<b>${country}</b><br>Año: %{x}<br>Valor: %{y:.2f}<extra></extra>`
         };
 
         const layout = {
+            ...PLOTLY_THEME,
             xaxis: {
-                title: 'Año',
-                gridcolor: '#e9ecef'
+                ...PLOTLY_THEME.xaxis,
+                showticklabels: idx === countriesData.length - 1, // Solo último
+                fixedrange: false
             },
             yaxis: {
-                title: yaxisTitle,
-                gridcolor: '#e9ecef'
+                ...PLOTLY_THEME.yaxis,
+                title: idx === 0 ? { text: yaxisTitle, font: { size: 10 } } : undefined,
+                range: sharedYRange,
+                fixedrange: true
             },
-            plot_bgcolor: '#f8f9fa',
-            paper_bgcolor: 'white',
-            height: 300,
-            margin: { t: 20, r: 30, b: 50, l: 60 },
+            height: 220,
+            margin: { t: 10, r: 30, b: idx === countriesData.length - 1 ? 40 : 20, l: 60 },
             showlegend: false
         };
 
-        const config = {
-            responsive: true,
-            displayModeBar: false
-        };
-
-        Plotly.newPlot(`chart-${idx}`, [trace], layout, config);
+        Plotly.newPlot(`chart-${idx}`, [trace], layout, PLOTLY_CONFIG);
     });
 }
 
