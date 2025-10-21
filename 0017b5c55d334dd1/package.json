@@ -1,0 +1,14 @@
+{
+  "name": "0017b5c55d334dd1",
+  "main": "0017b5c55d334dd1@1807.js",
+  "version": "1807.0.0",
+  "homepage": "https://observablehq.com/d/0017b5c55d334dd1",
+  "author": {
+    "name": "elias",
+    "url": "https://observablehq.com/@debianalt"
+  },
+  "type": "module",
+  "peerDependencies": {
+    "@observablehq/runtime": "4 - 5"
+  }
+}
