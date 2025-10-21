@@ -1,4 +1,5 @@
-// MF-7c: Análisis de Desacoplamiento Tapio - JavaScript
+// MF-7c: Análisis Tapio - JavaScript (Professional Edition)
+// Ridge plots y visualizaciones sofisticadas, SIN gráfico de torta
 
 const BLOCS = {
     "UE": [
@@ -11,16 +12,15 @@ const BLOCS = {
     "Mercosur": ["Argentina", "Brazil", "Uruguay", "Paraguay"]
 };
 
-// Categorías Tapio con colores
 const TAPIO_CATEGORIES = {
-    "Strong Decoupling": { color: "#2ecc71", desc: "Material ↓, Driver ↑" },
-    "Weak Decoupling": { color: "#27ae60", desc: "Ambos ↑, Material < Driver" },
-    "Expansive Coupling": { color: "#f39c12", desc: "Ambos ↑, Material ≈ Driver" },
-    "Expansive Negative": { color: "#e67e22", desc: "Ambos ↑, Material > Driver" },
-    "Strong Negative": { color: "#e74c3c", desc: "Material ↑, Driver ↓" },
-    "Weak Negative": { color: "#c0392b", desc: "Ambos ↓, Material > Driver" },
-    "Recessive Coupling": { color: "#95a5a6", desc: "Ambos ↓, Material ≈ Driver" },
-    "Recessive Decoupling": { color: "#34495e", desc: "Ambos ↓, Material < Driver" }
+    "Strong Decoupling": { color: "#27ae60", order: 1 },
+    "Weak Decoupling": { color: "#2ecc71", order: 2 },
+    "Expansive Coupling": { color: "#f39c12", order: 3 },
+    "Expansive Negative": { color: "#e67e22", order: 4 },
+    "Strong Negative": { color: "#e74c3c", order: 5 },
+    "Weak Negative": { color: "#c0392b", order: 6 },
+    "Recessive Coupling": { color: "#7f8c8d", order: 7 },
+    "Recessive Decoupling": { color: "#34495e", order: 8 }
 };
 
 let rawData = [];
@@ -39,7 +39,21 @@ const elements = {
     yearEndValue: document.getElementById('yearEndValue')
 };
 
-// Cargar datos
+const PLOTLY_THEME = {
+    plot_bgcolor: '#1a1a1a',
+    paper_bgcolor: '#1a1a1a',
+    font: { color: '#e0e0e0', family: 'Inter, sans-serif', size: 11 },
+    xaxis: { gridcolor: '#2a2a2a', zerolinecolor: '#3a3a3a' },
+    yaxis: { gridcolor: '#2a2a2a', zerolinecolor: '#3a3a3a' }
+};
+
+const PLOTLY_CONFIG = {
+    responsive: true,
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+};
+
 async function loadData() {
     try {
         const response = await fetch('mfa_data.csv');
@@ -104,10 +118,9 @@ function initializeUI() {
         `<option value="${f}"${f === 'GDP' ? ' selected' : ''}>${f}</option>`
     ).join('');
 
-    // Event listeners
     [elements.regionSelect, elements.flowSelect, elements.driverSelect].forEach(el => {
         el.addEventListener('change', () => {
-            updateCountries();
+            if (el === elements.regionSelect) updateCountries();
             updateData();
         });
     });
@@ -151,13 +164,11 @@ function updateData() {
     tapioResults = [];
 
     selectedCountries.forEach(country => {
-        // Obtener series de datos
         const flowData = getCountrySeries(country, flow, yearMin, yearMax);
         const driverData = getCountrySeries(country, driver, yearMin, yearMax);
 
         if (!flowData || !driverData) return;
 
-        // Calcular análisis Tapio año a año
         for (let i = 1; i < flowData.years.length; i++) {
             const year = flowData.years[i];
             const yearPrev = flowData.years[i - 1];
@@ -169,11 +180,10 @@ function updateData() {
 
             if (valFlowPrev === 0 || valDriverPrev === 0) continue;
 
-            // Tasas de cambio
             const rateFlow = (valFlow - valFlowPrev) / valFlowPrev;
             const rateDriver = (valDriver - valDriverPrev) / valDriverPrev;
+            const elasticity = rateDriver !== 0 ? rateFlow / rateDriver : Infinity;
 
-            // Clasificación Tapio
             const category = classifyTapio(rateFlow, rateDriver, tol);
 
             tapioResults.push({
@@ -182,14 +192,16 @@ function updateData() {
                 yearEnd: year,
                 rateFlow,
                 rateDriver,
+                elasticity,
                 category
             });
         }
     });
 
-    renderTapioDistribution();
-    renderTapioTimeline();
     renderScatterPlot();
+    renderTapioTimeline();
+    renderRidgePlot();
+    renderTransitionMatrix();
 }
 
 function getCountrySeries(country, flow, yearMin, yearMax) {
@@ -209,149 +221,29 @@ function getCountrySeries(country, flow, yearMin, yearMax) {
 }
 
 function classifyTapio(rateFlow, rateDriver, tol) {
-    // Ratio de elasticidad
     const elasticity = rateDriver !== 0 ? rateFlow / rateDriver : Infinity;
 
     if (rateDriver > 0) {
-        // Driver creciendo
-        if (rateFlow < 0) {
-            return "Strong Decoupling";
-        } else if (elasticity < 1 - tol) {
-            return "Weak Decoupling";
-        } else if (elasticity >= 1 - tol && elasticity <= 1 + tol) {
-            return "Expansive Coupling";
-        } else {
-            return "Expansive Negative";
-        }
+        if (rateFlow < 0) return "Strong Decoupling";
+        else if (elasticity < 1 - tol) return "Weak Decoupling";
+        else if (elasticity >= 1 - tol && elasticity <= 1 + tol) return "Expansive Coupling";
+        else return "Expansive Negative";
     } else if (rateDriver < 0) {
-        // Driver decreciendo
-        if (rateFlow > 0) {
-            return "Strong Negative";
-        } else if (Math.abs(elasticity) < 1 - tol) {
-            return "Recessive Decoupling";
-        } else if (Math.abs(elasticity) >= 1 - tol && Math.abs(elasticity) <= 1 + tol) {
-            return "Recessive Coupling";
-        } else {
-            return "Weak Negative";
-        }
+        if (rateFlow > 0) return "Strong Negative";
+        else if (Math.abs(elasticity) < 1 - tol) return "Recessive Decoupling";
+        else if (Math.abs(elasticity) >= 1 - tol && Math.abs(elasticity) <= 1 + tol) return "Recessive Coupling";
+        else return "Weak Negative";
     } else {
-        return "Expansive Coupling"; // Default
+        return "Expansive Coupling";
     }
 }
 
-function renderTapioDistribution() {
-    const counts = {};
-    Object.keys(TAPIO_CATEGORIES).forEach(cat => counts[cat] = 0);
-
-    tapioResults.forEach(r => {
-        counts[r.category]++;
-    });
-
-    const labels = Object.keys(counts);
-    const values = Object.values(counts);
-    const colors = labels.map(l => TAPIO_CATEGORIES[l].color);
-
-    const trace = {
-        labels,
-        values,
-        type: 'pie',
-        marker: { colors },
-        textinfo: 'label+percent',
-        textposition: 'outside',
-        automargin: true
-    };
-
-    const layout = {
-        title: {
-            text: 'Distribución de Estados de Desacoplamiento',
-            font: { size: 18 }
-        },
-        height: 500,
-        showlegend: true
-    };
-
-    const config = {
-        responsive: true,
-        displaylogo: false
-    };
-
-    Plotly.newPlot('tapioDistribution', [trace], layout, config);
-}
-
-function renderTapioTimeline() {
-    const countriesData = {};
-
-    selectedCountries.forEach(country => {
-        countriesData[country] = {};
-    });
-
-    tapioResults.forEach(r => {
-        if (!countriesData[r.country][r.yearEnd]) {
-            countriesData[r.country][r.yearEnd] = [];
-        }
-        countriesData[r.country][r.yearEnd].push(r.category);
-    });
-
-    const traces = [];
-    const categories = Object.keys(TAPIO_CATEGORIES);
-
-    categories.forEach(category => {
-        const x = [];
-        const y = [];
-        const colors = [];
-
-        selectedCountries.forEach((country, idx) => {
-            const years = Object.keys(countriesData[country]).map(Number).sort((a, b) => a - b);
-            years.forEach(year => {
-                const cats = countriesData[country][year];
-                if (cats.includes(category)) {
-                    x.push(year);
-                    y.push(country);
-                    colors.push(TAPIO_CATEGORIES[category].color);
-                }
-            });
-        });
-
-        traces.push({
-            x,
-            y,
-            mode: 'markers',
-            type: 'scatter',
-            name: category,
-            marker: {
-                size: 10,
-                color: TAPIO_CATEGORIES[category].color
-            }
-        });
-    });
-
-    const layout = {
-        title: {
-            text: 'Evolución Temporal de Estados Tapio por País',
-            font: { size: 18 }
-        },
-        xaxis: {
-            title: 'Año',
-            gridcolor: '#e9ecef'
-        },
-        yaxis: {
-            title: 'País',
-            gridcolor: '#e9ecef'
-        },
-        height: Math.max(400, selectedCountries.length * 40),
-        hovermode: 'closest',
-        showlegend: true
-    };
-
-    const config = {
-        responsive: true,
-        displaylogo: false
-    };
-
-    Plotly.newPlot('tapioTimeline', traces, layout, config);
-}
-
 function renderScatterPlot() {
+    if (tapioResults.length === 0) {
+        document.getElementById('scatterPlot').innerHTML = '<p style="text-align:center;padding:40px;color:#666;">No hay datos</p>';
+        return;
+    }
+
     const traces = Object.keys(TAPIO_CATEGORIES).map(category => {
         const results = tapioResults.filter(r => r.category === category);
 
@@ -364,7 +256,8 @@ function renderScatterPlot() {
             marker: {
                 size: 8,
                 color: TAPIO_CATEGORIES[category].color,
-                opacity: 0.7
+                opacity: 0.7,
+                line: { color: '#2a2a2a', width: 1 }
             },
             text: results.map(r => `${r.country} (${r.yearStart}-${r.yearEnd})`),
             hovertemplate: '<b>%{text}</b><br>Driver: %{x:.1f}%<br>Material: %{y:.1f}%<extra></extra>'
@@ -372,20 +265,17 @@ function renderScatterPlot() {
     });
 
     const layout = {
-        title: {
-            text: 'Dispersión: Tasa de Cambio Material vs Driver',
-            font: { size: 18 }
-        },
+        ...PLOTLY_THEME,
         xaxis: {
-            title: 'Tasa de Cambio Driver (%)',
-            gridcolor: '#e9ecef',
+            ...PLOTLY_THEME.xaxis,
+            title: { text: 'Tasa de Cambio Driver (%)', font: { size: 12 } },
             zeroline: true,
             zerolinecolor: '#666',
             zerolinewidth: 2
         },
         yaxis: {
-            title: 'Tasa de Cambio Material (%)',
-            gridcolor: '#e9ecef',
+            ...PLOTLY_THEME.yaxis,
+            title: { text: 'Tasa de Cambio Material (%)', font: { size: 12 } },
             zeroline: true,
             zerolinecolor: '#666',
             zerolinewidth: 2
@@ -393,15 +283,197 @@ function renderScatterPlot() {
         height: 600,
         hovermode: 'closest',
         showlegend: true,
-        plot_bgcolor: '#f8f9fa'
+        legend: { x: 1.02, y: 1 }
     };
 
-    const config = {
-        responsive: true,
-        displaylogo: false
+    Plotly.newPlot('scatterPlot', traces, layout, PLOTLY_CONFIG);
+}
+
+function renderTapioTimeline() {
+    if (tapioResults.length === 0) {
+        document.getElementById('tapioTimeline').innerHTML = '<p style="text-align:center;padding:40px;color:#666;">No hay datos</p>';
+        return;
+    }
+
+    const traces = [];
+    const categories = Object.keys(TAPIO_CATEGORIES);
+
+    categories.forEach(category => {
+        const x = [];
+        const y = [];
+
+        selectedCountries.forEach(country => {
+            const countryResults = tapioResults.filter(r => r.country === country && r.category === category);
+            countryResults.forEach(r => {
+                x.push(r.yearEnd);
+                y.push(country);
+            });
+        });
+
+        traces.push({
+            x,
+            y,
+            mode: 'markers',
+            type: 'scatter',
+            name: category,
+            marker: {
+                size: 10,
+                color: TAPIO_CATEGORIES[category].color,
+                symbol: 'square'
+            }
+        });
+    });
+
+    const layout = {
+        ...PLOTLY_THEME,
+        xaxis: {
+            ...PLOTLY_THEME.xaxis,
+            title: { text: 'Año', font: { size: 12 } }
+        },
+        yaxis: {
+            ...PLOTLY_THEME.yaxis,
+            title: { text: 'País', font: { size: 12 } }
+        },
+        height: Math.max(400, selectedCountries.length * 40),
+        hovermode: 'closest',
+        showlegend: true,
+        legend: { x: 1.02, y: 1 }
     };
 
-    Plotly.newPlot('scatterPlot', traces, layout, config);
+    Plotly.newPlot('tapioTimeline', traces, layout, PLOTLY_CONFIG);
+}
+
+function renderRidgePlot() {
+    if (tapioResults.length === 0) {
+        document.getElementById('ridgePlot').innerHTML = '<p style="text-align:center;padding:40px;color:#666;">No hay datos</p>';
+        return;
+    }
+
+    // Agrupar elasticidades por país
+    const elasticitiesByCountry = {};
+    selectedCountries.forEach(c => elasticitiesByCountry[c] = []);
+
+    tapioResults.forEach(r => {
+        if (Number.isFinite(r.elasticity) && Math.abs(r.elasticity) < 10) {
+            elasticitiesByCountry[r.country].push(r.elasticity);
+        }
+    });
+
+    // Ordenar países por mediana de elasticidad
+    const sortedCountries = Object.keys(elasticitiesByCountry)
+        .filter(c => elasticitiesByCountry[c].length > 0)
+        .sort((a, b) => {
+            const medianA = d3.median(elasticitiesByCountry[a]) || 0;
+            const medianB = d3.median(elasticitiesByCountry[b]) || 0;
+            return medianB - medianA;
+        });
+
+    const traces = sortedCountries.map((country, idx) => ({
+        x: elasticitiesByCountry[country],
+        type: 'violin',
+        name: country,
+        orientation: 'h',
+        side: 'positive',
+        width: 3,
+        points: false,
+        marker: {
+            color: `hsl(${(idx * 360 / sortedCountries.length)}, 70%, 60%)`
+        },
+        line: { color: '#2a2a2a' },
+        meanline: { visible: true }
+    }));
+
+    const layout = {
+        ...PLOTLY_THEME,
+        xaxis: {
+            ...PLOTLY_THEME.xaxis,
+            title: { text: 'Elasticidad (Material / Driver)', font: { size: 12 } },
+            zeroline: true,
+            zerolinecolor: '#666',
+            zerolinewidth: 2,
+            range: [-3, 3]
+        },
+        yaxis: {
+            ...PLOTLY_THEME.yaxis,
+            showticklabels: false
+        },
+        height: Math.max(500, sortedCountries.length * 40),
+        showlegend: true,
+        legend: { x: 1.02, y: 1 }
+    };
+
+    Plotly.newPlot('ridgePlot', traces, layout, PLOTLY_CONFIG);
+}
+
+function renderTransitionMatrix() {
+    if (tapioResults.length === 0) {
+        document.getElementById('transitionMatrix').innerHTML = '<p style="text-align:center;padding:40px;color:#666;">No hay datos</p>';
+        return;
+    }
+
+    // Agrupar por país y año para encontrar transiciones
+    const byCountryYear = {};
+    tapioResults.forEach(r => {
+        const key = `${r.country}_${r.yearEnd}`;
+        byCountryYear[key] = r.category;
+    });
+
+    // Calcular matriz de transición
+    const categories = Object.keys(TAPIO_CATEGORIES);
+    const transitions = {};
+    categories.forEach(from => {
+        transitions[from] = {};
+        categories.forEach(to => {
+            transitions[from][to] = 0;
+        });
+    });
+
+    tapioResults.forEach(r => {
+        const prevKey = `${r.country}_${r.yearStart}`;
+        const currKey = `${r.country}_${r.yearEnd}`;
+        const prevCat = byCountryYear[prevKey];
+        const currCat = byCountryYear[currKey];
+
+        if (prevCat && currCat) {
+            transitions[prevCat][currCat]++;
+        }
+    });
+
+    // Preparar datos para heatmap
+    const z = categories.map(from =>
+        categories.map(to => transitions[from][to])
+    );
+
+    const trace = {
+        z,
+        x: categories.map(c => c.replace(' ', '<br>')),
+        y: categories.map(c => c.replace(' ', '<br>')),
+        type: 'heatmap',
+        colorscale: [
+            [0, '#0f0f0f'],
+            [0.5, '#4a9eff'],
+            [1, '#ff4a4a']
+        ],
+        showscale: true,
+        hovertemplate: 'De: %{y}<br>A: %{x}<br>Transiciones: %{z}<extra></extra>'
+    };
+
+    const layout = {
+        ...PLOTLY_THEME,
+        xaxis: {
+            ...PLOTLY_THEME.xaxis,
+            title: { text: 'Estado Destino', font: { size: 11 } },
+            tickangle: -45
+        },
+        yaxis: {
+            ...PLOTLY_THEME.yaxis,
+            title: { text: 'Estado Origen', font: { size: 11 } }
+        },
+        height: 600,
+        margin: { t: 20, r: 100, b: 120, l: 120 }
+    };
+
+    Plotly.newPlot('transitionMatrix', [trace], layout, PLOTLY_CONFIG);
 }
 
 loadData();
