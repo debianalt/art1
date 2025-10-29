@@ -420,69 +420,70 @@ function renderRidgePlot() {
         .map(country => {
             const values = elasticitiesByCountry[country].sort((a, b) => a - b);
             const median = d3.median(values) || 0;
-            const mean = d3.mean(values) || 0;
-            const q1 = d3.quantile(values, 0.25) || 0;
-            const q3 = d3.quantile(values, 0.75) || 0;
-
-            return {
-                country,
-                values,
-                median,
-                mean,
-                q1,
-                q3,
-                min: values[0],
-                max: values[values.length - 1],
-                count: values.length
-            };
+            return { country, values, median, count: values.length };
         })
         .sort((a, b) => b.median - a.median);
 
     // Determinar color según mediana
     const getColor = (median) => {
-        if (median < -0.5) return '#e74c3c'; // Rojo - negativo fuerte
-        if (median < 0) return '#e67e22';    // Naranja - negativo débil
-        if (median < 0.5) return '#f39c12';  // Amarillo - bajo positivo
-        if (median < 1) return '#2ecc71';    // Verde claro - positivo moderado
-        return '#27ae60';                     // Verde - positivo fuerte (desacoplamiento)
+        if (median < -0.5) return '#e74c3c';
+        if (median < 0) return '#e67e22';
+        if (median < 0.5) return '#f39c12';
+        if (median < 1) return '#2ecc71';
+        return '#27ae60';
     };
 
-    // Crear box plot horizontal con colores por desempeño
+    // Preparar datos aplanados para box plot
+    const yData = [];
+    const xData = [];
+    const colors = [];
+    const hoverText = [];
+
+    countryStats.forEach(stat => {
+        stat.values.forEach(value => {
+            yData.push(stat.country);
+            xData.push(value);
+            colors.push(getColor(stat.median));
+            hoverText.push(
+                `<b>${stat.country}</b><br>` +
+                `Elasticidad: ${value.toFixed(2)}<br>` +
+                `Mediana país: ${stat.median.toFixed(2)}<br>` +
+                `Observaciones: ${stat.count}`
+            );
+        });
+    });
+
     const trace = {
         type: 'box',
         orientation: 'h',
-        y: countryStats.map(s => s.country),
-        x: countryStats.map(s => s.values).flat(),
+        y: yData,
+        x: xData,
         marker: {
-            color: countryStats.map(s => getColor(s.median)),
-            line: { color: '#2a2a2a', width: 1 }
+            color: '#4a9eff',
+            opacity: 0.6,
+            line: { color: '#fff', width: 1.5 }
         },
-        boxmean: 'sd',
-        boxpoints: false,
-        hovertemplate: '<b>%{y}</b><br>' +
-            'Elasticidad: %{x:.2f}<br>' +
-            '<extra></extra>'
-    };
-
-    // Crear trazas separadas para cada país para tener colores individuales
-    const traces = countryStats.map(stat => ({
-        type: 'box',
-        orientation: 'h',
-        y: [stat.country],
-        x: stat.values,
-        name: stat.country,
-        marker: {
-            color: getColor(stat.median),
-            line: { color: '#fff', width: 1 }
-        },
+        fillcolor: 'rgba(74, 158, 255, 0.3)',
+        line: { color: '#4a9eff', width: 2 },
         boxmean: 'sd',
         boxpoints: false,
         showlegend: false,
-        hovertemplate: `<b>${stat.country}</b><br>` +
-            'Elasticidad: %{x:.2f}<br>' +
-            `Mediana: ${stat.median.toFixed(2)}<br>` +
-            `Observaciones: ${stat.count}<br>` +
-            '<extra></extra>'
+        hoverinfo: 'text',
+        text: hoverText
+    };
+
+    // Crear shapes para colorear el fondo de cada país
+    const shapes = countryStats.map((stat, idx) => ({
+        type: 'rect',
+        xref: 'paper',
+        yref: 'y',
+        x0: 0,
+        x1: 1,
+        y0: idx - 0.4,
+        y1: idx + 0.4,
+        fillcolor: getColor(stat.median),
+        opacity: 0.15,
+        line: { width: 0 }
     }));
 
     const layout = {
@@ -505,11 +506,14 @@ function renderRidgePlot() {
         yaxis: {
             ...PLOTLY_THEME.yaxis,
             title: { text: 'País (ordenado por mediana)', font: { size: 11 } },
-            automargin: true
+            automargin: true,
+            categoryorder: 'array',
+            categoryarray: countryStats.map(s => s.country)
         },
         height: Math.max(500, countryStats.length * 45),
         showlegend: false,
         margin: { l: 120, r: 40, t: 80, b: 80 },
+        shapes: shapes,
         annotations: [
             {
                 x: 1,
@@ -524,7 +528,7 @@ function renderRidgePlot() {
         ]
     };
 
-    Plotly.newPlot('ridgePlot', traces, layout, PLOTLY_CONFIG);
+    Plotly.newPlot('ridgePlot', [trace], layout, PLOTLY_CONFIG);
 }
 
 function renderTransitionMatrix() {
