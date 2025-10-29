@@ -438,51 +438,31 @@ function renderRidgePlot() {
         return '#27ae60';
     };
 
-    // Crear violin plots (ridgeline style) para cada país
-    const traces = [];
-
-    countryStats.forEach((stat, idx) => {
+    // Crear violin plots (ridgeline style) para cada país - UNA CURVA POR PAÍS
+    const traces = countryStats.map((stat, idx) => {
         const color = getColor(stat.median);
 
-        // Trace para la curva de densidad (sin puntos)
-        traces.push({
+        return {
             type: 'violin',
             x: stat.values,
             y: Array(stat.values.length).fill(idx),
             name: stat.country,
             orientation: 'h',
             side: 'positive',
-            width: 2.5,
+            width: 3,
             points: false,
             scalemode: 'width',
-            meanline: { visible: true, color: '#fff', width: 2 },
+            meanline: { visible: true, color: '#fff', width: 2.5 },
             line: { color: color, width: 2 },
             fillcolor: color,
-            opacity: 0.6,
+            opacity: 0.7,
             spanmode: 'hard',
-            showlegend: false,
-            hoverinfo: 'skip'
-        });
-
-        // Trace para los puntos individuales con hover mejorado
-        traces.push({
-            type: 'scatter',
-            mode: 'markers',
-            x: stat.values,
-            y: stat.values.map((v, i) => idx + (Math.random() - 0.5) * 0.15), // jitter pequeño
-            name: stat.country,
-            marker: {
-                size: 5,
-                color: color,
-                opacity: 0.6,
-                line: { color: '#fff', width: 0.5 }
-            },
             showlegend: false,
             hovertemplate: `<b>${stat.country}</b><br>` +
                 `Elasticidad: %{x:.2f}<br>` +
-                `Mediana del país: ${stat.median.toFixed(2)}<br>` +
-                `Total observaciones: ${stat.count}<extra></extra>`
-        });
+                `Mediana: ${stat.median.toFixed(2)}<br>` +
+                `Observaciones: ${stat.count}<extra></extra>`
+        };
     });
 
     // Crear línea vertical en x=1 para marcar desacoplamiento
@@ -520,8 +500,8 @@ function renderRidgePlot() {
     const layout = {
         ...PLOTLY_THEME,
         title: {
-            text: 'Distribución de elasticidades | Línea azul = umbral desacoplamiento (1.0)',
-            font: { size: 12, color: '#888' },
+            text: 'Cada curva = distribución de elasticidades de un país | Línea blanca = promedio del país',
+            font: { size: 11, color: '#888' },
             x: 0.5,
             xanchor: 'center'
         },

@@ -343,7 +343,13 @@
 
             <div class="chart-container">
                 <h2 class="section-title">Distribución de Elasticidades por País (Ridgeline Plot)</h2>
-                <p class="chart-description">Cada curva muestra la distribución completa de elasticidades para un país. La elasticidad mide cuánto cambia el consumo de materiales por cada 1% de cambio en el driver. Valores &lt; 1 (izquierda de línea azul) indican desacoplamiento relativo.</p>
+                <p class="chart-description">
+                    <strong>Eje Horizontal (X):</strong> Elasticidad = qué tanto cambia el consumo de materiales cuando el driver económico cambia 1%.
+                    Valores &lt; 1 (izquierda de línea azul) = desacoplamiento relativo (eficiencia mejorada).<br>
+                    <strong>Eje Vertical (Y):</strong> Cada fila = un país. La curva muestra la frecuencia/densidad de sus elasticidades en el período analizado.
+                    Curvas anchas = mayor variación; curvas estrechas = comportamiento más consistente.
+                    La línea blanca marca la elasticidad promedio del país.
+                </p>
                 <div id="ridgePlot"></div>
             </div>
 
