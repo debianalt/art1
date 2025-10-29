@@ -449,19 +449,17 @@ function renderRidgePlot() {
             name: stat.country,
             orientation: 'h',
             side: 'positive',
-            width: 3,
+            width: 1.8,  // Reducido para evitar superposición
             points: false,
-            scalemode: 'width',
+            scalemode: 'count',
             meanline: { visible: true, color: '#fff', width: 2.5 },
             line: { color: color, width: 2 },
             fillcolor: color,
             opacity: 0.7,
             spanmode: 'hard',
             showlegend: false,
-            hovertemplate: `<b>${stat.country}</b><br>` +
-                `Elasticidad: %{x:.2f}<br>` +
-                `Mediana: ${stat.median.toFixed(2)}<br>` +
-                `Observaciones: ${stat.count}<extra></extra>`
+            hoverinfo: 'text',
+            text: `<b>${stat.country}</b><br>Mediana: ${stat.median.toFixed(2)}<br>Media: ${d3.mean(stat.values).toFixed(2)}<br>Min: ${Math.min(...stat.values).toFixed(2)}<br>Max: ${Math.max(...stat.values).toFixed(2)}<br>Observaciones: ${stat.count}`
         };
     });
 
@@ -525,7 +523,7 @@ function renderRidgePlot() {
             tickfont: { size: 11, color: '#b0b0b0' },
             range: [-0.5, countryStats.length - 0.5]
         },
-        height: Math.max(600, countryStats.length * 60),
+        height: Math.max(700, countryStats.length * 80),
         showlegend: false,
         margin: { l: 130, r: 60, t: 80, b: 80 },
         shapes: shapes,
