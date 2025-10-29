@@ -424,6 +424,11 @@ function renderRidgePlot() {
         })
         .sort((a, b) => b.median - a.median);
 
+    if (countryStats.length === 0) {
+        document.getElementById('ridgePlot').innerHTML = '<p style="text-align:center;padding:40px;color:#666;">No hay datos suficientes</p>';
+        return;
+    }
+
     // Determinar color según mediana
     const getColor = (median) => {
         if (median < -0.5) return '#e74c3c';
@@ -433,102 +438,125 @@ function renderRidgePlot() {
         return '#27ae60';
     };
 
-    // Preparar datos aplanados para box plot
-    const yData = [];
-    const xData = [];
-    const colors = [];
-    const hoverText = [];
-
-    countryStats.forEach(stat => {
-        stat.values.forEach(value => {
-            yData.push(stat.country);
-            xData.push(value);
-            colors.push(getColor(stat.median));
-            hoverText.push(
-                `<b>${stat.country}</b><br>` +
-                `Elasticidad: ${value.toFixed(2)}<br>` +
-                `Mediana país: ${stat.median.toFixed(2)}<br>` +
-                `Observaciones: ${stat.count}`
-            );
-        });
-    });
-
-    const trace = {
-        type: 'box',
+    // Crear violin plots (ridgeline style) para cada país
+    const traces = countryStats.map((stat, idx) => ({
+        type: 'violin',
+        x: stat.values,
+        y: Array(stat.values.length).fill(stat.country),
+        name: stat.country,
         orientation: 'h',
-        y: yData,
-        x: xData,
-        marker: {
-            color: '#4a9eff',
-            opacity: 0.6,
-            line: { color: '#fff', width: 1.5 }
-        },
-        fillcolor: 'rgba(74, 158, 255, 0.3)',
-        line: { color: '#4a9eff', width: 2 },
-        boxmean: 'sd',
-        boxpoints: false,
-        showlegend: false,
-        hoverinfo: 'text',
-        text: hoverText
-    };
-
-    // Crear shapes para colorear el fondo de cada país
-    const shapes = countryStats.map((stat, idx) => ({
-        type: 'rect',
-        xref: 'paper',
-        yref: 'y',
-        x0: 0,
-        x1: 1,
-        y0: idx - 0.4,
-        y1: idx + 0.4,
+        side: 'positive',
+        width: 2,
+        points: 'all',
+        pointpos: 0,
+        jitter: 0.3,
+        scalemode: 'width',
+        meanline: { visible: true, color: '#fff', width: 2 },
+        line: { color: getColor(stat.median), width: 2 },
         fillcolor: getColor(stat.median),
-        opacity: 0.15,
-        line: { width: 0 }
+        opacity: 0.6,
+        marker: {
+            size: 4,
+            color: getColor(stat.median),
+            opacity: 0.5,
+            line: { color: '#fff', width: 0.5 }
+        },
+        spanmode: 'hard',
+        showlegend: false,
+        hovertemplate: `<b>${stat.country}</b><br>` +
+            `Elasticidad: %{x:.2f}<br>` +
+            `Mediana: ${stat.median.toFixed(2)}<br>` +
+            `N = ${stat.count}<extra></extra>`
     }));
+
+    // Crear línea vertical en x=1 para marcar desacoplamiento
+    const shapes = [
+        {
+            type: 'line',
+            x0: 1,
+            x1: 1,
+            y0: -0.5,
+            y1: countryStats.length - 0.5,
+            line: {
+                color: '#4a9eff',
+                width: 2,
+                dash: 'dash'
+            }
+        },
+        {
+            type: 'line',
+            x0: 0,
+            x1: 0,
+            y0: -0.5,
+            y1: countryStats.length - 0.5,
+            line: {
+                color: '#888',
+                width: 2,
+                dash: 'dot'
+            }
+        }
+    ];
 
     const layout = {
         ...PLOTLY_THEME,
         title: {
-            text: 'Elasticidad = ΔMaterial / ΔDriver | Valores < 1 = Desacoplamiento relativo',
+            text: 'Distribución de elasticidades | Línea azul = umbral desacoplamiento (1.0)',
             font: { size: 12, color: '#888' },
             x: 0.5,
             xanchor: 'center'
         },
         xaxis: {
             ...PLOTLY_THEME.xaxis,
-            title: { text: 'Elasticidad (cambio % Material / cambio % Driver)', font: { size: 12 } },
+            title: { text: 'Elasticidad (ΔMaterial / ΔDriver)', font: { size: 12 } },
             zeroline: true,
-            zerolinecolor: '#4a9eff',
-            zerolinewidth: 2,
+            zerolinecolor: '#888',
+            zerolinewidth: 1,
             range: [-3, 3],
-            gridcolor: '#2a2a2a'
+            gridcolor: '#2a2a2a',
+            tickfont: { size: 11 }
         },
         yaxis: {
             ...PLOTLY_THEME.yaxis,
-            title: { text: 'País (ordenado por mediana)', font: { size: 11 } },
+            title: { text: '', font: { size: 11 } },
             automargin: true,
             categoryorder: 'array',
-            categoryarray: countryStats.map(s => s.country)
+            categoryarray: countryStats.map(s => s.country),
+            tickfont: { size: 11, color: '#b0b0b0' }
         },
-        height: Math.max(500, countryStats.length * 45),
+        height: Math.max(600, countryStats.length * 60),
         showlegend: false,
-        margin: { l: 120, r: 40, t: 80, b: 80 },
+        margin: { l: 130, r: 60, t: 80, b: 80 },
         shapes: shapes,
         annotations: [
             {
                 x: 1,
-                y: 1.05,
+                y: 1.06,
                 xref: 'paper',
                 yref: 'paper',
-                text: 'Verde: desacoplamiento | Amarillo: acoplamiento débil | Rojo: acoplamiento negativo',
+                text: '🟢 Verde = desacoplamiento  |  🟡 Amarillo = acoplamiento débil  |  🔴 Rojo = negativo',
                 showarrow: false,
-                font: { size: 10, color: '#666' },
+                font: { size: 10, color: '#888' },
                 xanchor: 'right'
+            },
+            {
+                x: 1,
+                y: -0.5,
+                xref: 'x',
+                yref: 'paper',
+                text: 'Desacoplamiento<br>relativo',
+                showarrow: true,
+                arrowhead: 2,
+                arrowsize: 1,
+                arrowwidth: 1,
+                arrowcolor: '#4a9eff',
+                ax: 30,
+                ay: 20,
+                font: { size: 10, color: '#4a9eff' }
             }
         ]
     };
 
-    Plotly.newPlot('ridgePlot', [trace], layout, PLOTLY_CONFIG);
+    Plotly.newPlot('ridgePlot', traces, layout, PLOTLY_CONFIG);
 }
 
 function renderTransitionMatrix() {
