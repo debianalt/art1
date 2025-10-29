@@ -448,7 +448,7 @@ function renderRidgePlot() {
         traces.push({
             type: 'violin',
             x: stat.values,
-            y: Array(stat.values.length).fill(stat.country),
+            y: Array(stat.values.length).fill(idx),
             name: stat.country,
             orientation: 'h',
             side: 'positive',
@@ -458,7 +458,7 @@ function renderRidgePlot() {
             meanline: { visible: true, color: '#fff', width: 2 },
             line: { color: color, width: 2 },
             fillcolor: color,
-            opacity: 0.5,
+            opacity: 0.6,
             spanmode: 'hard',
             showlegend: false,
             hoverinfo: 'skip'
@@ -469,13 +469,13 @@ function renderRidgePlot() {
             type: 'scatter',
             mode: 'markers',
             x: stat.values,
-            y: Array(stat.values.length).fill(idx),
+            y: stat.values.map((v, i) => idx + (Math.random() - 0.5) * 0.15), // jitter pequeño
             name: stat.country,
             marker: {
-                size: 6,
+                size: 5,
                 color: color,
-                opacity: 0.7,
-                line: { color: '#fff', width: 1 }
+                opacity: 0.6,
+                line: { color: '#fff', width: 0.5 }
             },
             showlegend: false,
             hovertemplate: `<b>${stat.country}</b><br>` +
@@ -539,13 +539,11 @@ function renderRidgePlot() {
             ...PLOTLY_THEME.yaxis,
             title: { text: '', font: { size: 11 } },
             automargin: true,
-            type: 'category',
-            categoryorder: 'array',
-            categoryarray: countryStats.map(s => s.country),
             tickmode: 'array',
             tickvals: countryStats.map((s, i) => i),
             ticktext: countryStats.map(s => s.country),
-            tickfont: { size: 11, color: '#b0b0b0' }
+            tickfont: { size: 11, color: '#b0b0b0' },
+            range: [-0.5, countryStats.length - 0.5]
         },
         height: Math.max(600, countryStats.length * 60),
         showlegend: false,
