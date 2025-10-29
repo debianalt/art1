@@ -244,38 +244,93 @@ function renderScatterPlot() {
         return;
     }
 
-    const traces = Object.keys(TAPIO_CATEGORIES).map(category => {
-        const results = tapioResults.filter(r => r.category === category);
+    // Agregar por país para todo el período
+    const countryAggregates = {};
+
+    tapioResults.forEach(r => {
+        if (!countryAggregates[r.country]) {
+            countryAggregates[r.country] = {
+                country: r.country,
+                rateFlowSum: 0,
+                rateDriverSum: 0,
+                count: 0,
+                categories: []
+            };
+        }
+        countryAggregates[r.country].rateFlowSum += r.rateFlow;
+        countryAggregates[r.country].rateDriverSum += r.rateDriver;
+        countryAggregates[r.country].count += 1;
+        countryAggregates[r.country].categories.push(r.category);
+    });
+
+    // Calcular promedios y categoría dominante
+    const aggregatedData = Object.values(countryAggregates).map(agg => {
+        const avgRateFlow = agg.rateFlowSum / agg.count;
+        const avgRateDriver = agg.rateDriverSum / agg.count;
+
+        // Categoría más frecuente
+        const categoryCounts = {};
+        agg.categories.forEach(cat => {
+            categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+        });
+        const dominantCategory = Object.keys(categoryCounts).reduce((a, b) =>
+            categoryCounts[a] > categoryCounts[b] ? a : b
+        );
 
         return {
-            x: results.map(r => r.rateDriver * 100),
-            y: results.map(r => r.rateFlow * 100),
-            mode: 'markers',
+            country: agg.country,
+            avgRateFlow,
+            avgRateDriver,
+            count: agg.count,
+            category: dominantCategory
+        };
+    });
+
+    // Crear trazas por categoría
+    const traces = Object.keys(TAPIO_CATEGORIES).map(category => {
+        const data = aggregatedData.filter(d => d.category === category);
+
+        return {
+            x: data.map(d => d.avgRateDriver * 100),
+            y: data.map(d => d.avgRateFlow * 100),
+            mode: 'markers+text',
             type: 'scatter',
             name: category,
             marker: {
-                size: 8,
+                size: data.map(d => Math.max(10, Math.min(30, d.count * 2))),
                 color: TAPIO_CATEGORIES[category].color,
-                opacity: 0.7,
-                line: { color: '#2a2a2a', width: 1 }
+                opacity: 0.8,
+                line: { color: '#fff', width: 2 }
             },
-            text: results.map(r => `${r.country} (${r.yearStart}-${r.yearEnd})`),
-            hovertemplate: '<b>%{text}</b><br>Driver: %{x:.1f}%<br>Material: %{y:.1f}%<extra></extra>'
+            text: data.map(d => d.country),
+            textposition: 'top center',
+            textfont: { size: 10, color: '#e0e0e0' },
+            hovertemplate: '<b>%{text}</b><br>' +
+                'Driver promedio: %{x:.1f}%<br>' +
+                'Material promedio: %{y:.1f}%<br>' +
+                'Períodos: %{marker.size}<extra></extra>',
+            customdata: data.map(d => d.count)
         };
     });
 
     const layout = {
         ...PLOTLY_THEME,
+        title: {
+            text: 'Cada círculo = 1 país (promedio del período seleccionado)',
+            font: { size: 13, color: '#888' },
+            x: 0.5,
+            xanchor: 'center'
+        },
         xaxis: {
             ...PLOTLY_THEME.xaxis,
-            title: { text: 'Tasa de Cambio Driver (%)', font: { size: 12 } },
+            title: { text: 'Tasa Promedio Driver (%/año)', font: { size: 12 } },
             zeroline: true,
             zerolinecolor: '#666',
             zerolinewidth: 2
         },
         yaxis: {
             ...PLOTLY_THEME.yaxis,
-            title: { text: 'Tasa de Cambio Material (%)', font: { size: 12 } },
+            title: { text: 'Tasa Promedio Material (%/año)', font: { size: 12 } },
             zeroline: true,
             zerolinecolor: '#666',
             zerolinewidth: 2
@@ -359,47 +414,114 @@ function renderRidgePlot() {
         }
     });
 
-    // Ordenar países por mediana de elasticidad
-    const sortedCountries = Object.keys(elasticitiesByCountry)
+    // Filtrar países con datos y calcular estadísticas
+    const countryStats = Object.keys(elasticitiesByCountry)
         .filter(c => elasticitiesByCountry[c].length > 0)
-        .sort((a, b) => {
-            const medianA = d3.median(elasticitiesByCountry[a]) || 0;
-            const medianB = d3.median(elasticitiesByCountry[b]) || 0;
-            return medianB - medianA;
-        });
+        .map(country => {
+            const values = elasticitiesByCountry[country].sort((a, b) => a - b);
+            const median = d3.median(values) || 0;
+            const mean = d3.mean(values) || 0;
+            const q1 = d3.quantile(values, 0.25) || 0;
+            const q3 = d3.quantile(values, 0.75) || 0;
 
-    const traces = sortedCountries.map((country, idx) => ({
-        x: elasticitiesByCountry[country],
-        type: 'violin',
-        name: country,
+            return {
+                country,
+                values,
+                median,
+                mean,
+                q1,
+                q3,
+                min: values[0],
+                max: values[values.length - 1],
+                count: values.length
+            };
+        })
+        .sort((a, b) => b.median - a.median);
+
+    // Determinar color según mediana
+    const getColor = (median) => {
+        if (median < -0.5) return '#e74c3c'; // Rojo - negativo fuerte
+        if (median < 0) return '#e67e22';    // Naranja - negativo débil
+        if (median < 0.5) return '#f39c12';  // Amarillo - bajo positivo
+        if (median < 1) return '#2ecc71';    // Verde claro - positivo moderado
+        return '#27ae60';                     // Verde - positivo fuerte (desacoplamiento)
+    };
+
+    // Crear box plot horizontal con colores por desempeño
+    const trace = {
+        type: 'box',
         orientation: 'h',
-        side: 'positive',
-        width: 3,
-        points: false,
+        y: countryStats.map(s => s.country),
+        x: countryStats.map(s => s.values).flat(),
         marker: {
-            color: `hsl(${(idx * 360 / sortedCountries.length)}, 70%, 60%)`
+            color: countryStats.map(s => getColor(s.median)),
+            line: { color: '#2a2a2a', width: 1 }
         },
-        line: { color: '#2a2a2a' },
-        meanline: { visible: true }
+        boxmean: 'sd',
+        boxpoints: false,
+        hovertemplate: '<b>%{y}</b><br>' +
+            'Elasticidad: %{x:.2f}<br>' +
+            '<extra></extra>'
+    };
+
+    // Crear trazas separadas para cada país para tener colores individuales
+    const traces = countryStats.map(stat => ({
+        type: 'box',
+        orientation: 'h',
+        y: [stat.country],
+        x: stat.values,
+        name: stat.country,
+        marker: {
+            color: getColor(stat.median),
+            line: { color: '#fff', width: 1 }
+        },
+        boxmean: 'sd',
+        boxpoints: false,
+        showlegend: false,
+        hovertemplate: `<b>${stat.country}</b><br>` +
+            'Elasticidad: %{x:.2f}<br>' +
+            `Mediana: ${stat.median.toFixed(2)}<br>` +
+            `Observaciones: ${stat.count}<br>` +
+            '<extra></extra>'
     }));
 
     const layout = {
         ...PLOTLY_THEME,
+        title: {
+            text: 'Elasticidad = ΔMaterial / ΔDriver | Valores < 1 = Desacoplamiento relativo',
+            font: { size: 12, color: '#888' },
+            x: 0.5,
+            xanchor: 'center'
+        },
         xaxis: {
             ...PLOTLY_THEME.xaxis,
-            title: { text: 'Elasticidad (Material / Driver)', font: { size: 12 } },
+            title: { text: 'Elasticidad (cambio % Material / cambio % Driver)', font: { size: 12 } },
             zeroline: true,
-            zerolinecolor: '#666',
+            zerolinecolor: '#4a9eff',
             zerolinewidth: 2,
-            range: [-3, 3]
+            range: [-3, 3],
+            gridcolor: '#2a2a2a'
         },
         yaxis: {
             ...PLOTLY_THEME.yaxis,
-            showticklabels: false
+            title: { text: 'País (ordenado por mediana)', font: { size: 11 } },
+            automargin: true
         },
-        height: Math.max(500, sortedCountries.length * 40),
-        showlegend: true,
-        legend: { x: 1.02, y: 1 }
+        height: Math.max(500, countryStats.length * 45),
+        showlegend: false,
+        margin: { l: 120, r: 40, t: 80, b: 80 },
+        annotations: [
+            {
+                x: 1,
+                y: 1.05,
+                xref: 'paper',
+                yref: 'paper',
+                text: 'Verde: desacoplamiento | Amarillo: acoplamiento débil | Rojo: acoplamiento negativo',
+                showarrow: false,
+                font: { size: 10, color: '#666' },
+                xanchor: 'right'
+            }
+        ]
     };
 
     Plotly.newPlot('ridgePlot', traces, layout, PLOTLY_CONFIG);

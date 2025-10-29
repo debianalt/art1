@@ -121,6 +121,15 @@
             padding-left: 15px;
         }
 
+        .chart-description {
+            font-size: 0.95em;
+            color: #888;
+            margin-bottom: 20px;
+            margin-top: -15px;
+            padding-left: 18px;
+            line-height: 1.6;
+        }
+
         .info-box {
             background: #1a1a1a;
             border-left: 3px solid #4a9eff;
@@ -323,7 +332,7 @@
             </div>
 
             <div class="chart-container">
-                <h2 class="section-title">Dispersión: Tasa Material vs Tasa Driver</h2>
+                <h2 class="section-title">Dispersión por País: Tasa Material vs Tasa Driver (Período Completo)</h2>
                 <div id="scatterPlot"></div>
             </div>
 
@@ -333,7 +342,8 @@
             </div>
 
             <div class="chart-container">
-                <h2 class="section-title">Ridge Plot: Distribución de elasticidades por país</h2>
+                <h2 class="section-title">Distribución de Elasticidades por País (Box Plot)</h2>
+                <p class="chart-description">La elasticidad mide cuánto cambia el consumo de materiales por cada 1% de cambio en el driver. Valores &lt; 1 indican desacoplamiento relativo (mejora en eficiencia).</p>
                 <div id="ridgePlot"></div>
             </div>
 
