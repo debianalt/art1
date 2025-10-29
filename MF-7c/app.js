@@ -439,44 +439,62 @@ function renderRidgePlot() {
     };
 
     // Crear violin plots (ridgeline style) para cada país
-    const traces = countryStats.map((stat, idx) => ({
-        type: 'violin',
-        x: stat.values,
-        y: Array(stat.values.length).fill(stat.country),
-        name: stat.country,
-        orientation: 'h',
-        side: 'positive',
-        width: 2,
-        points: 'all',
-        pointpos: 0,
-        jitter: 0.3,
-        scalemode: 'width',
-        meanline: { visible: true, color: '#fff', width: 2 },
-        line: { color: getColor(stat.median), width: 2 },
-        fillcolor: getColor(stat.median),
-        opacity: 0.6,
-        marker: {
-            size: 4,
-            color: getColor(stat.median),
+    const traces = [];
+
+    countryStats.forEach((stat, idx) => {
+        const color = getColor(stat.median);
+
+        // Trace para la curva de densidad (sin puntos)
+        traces.push({
+            type: 'violin',
+            x: stat.values,
+            y: Array(stat.values.length).fill(stat.country),
+            name: stat.country,
+            orientation: 'h',
+            side: 'positive',
+            width: 2.5,
+            points: false,
+            scalemode: 'width',
+            meanline: { visible: true, color: '#fff', width: 2 },
+            line: { color: color, width: 2 },
+            fillcolor: color,
             opacity: 0.5,
-            line: { color: '#fff', width: 0.5 }
-        },
-        spanmode: 'hard',
-        showlegend: false,
-        hovertemplate: `<b>${stat.country}</b><br>` +
-            `Elasticidad: %{x:.2f}<br>` +
-            `Mediana: ${stat.median.toFixed(2)}<br>` +
-            `N = ${stat.count}<extra></extra>`
-    }));
+            spanmode: 'hard',
+            showlegend: false,
+            hoverinfo: 'skip'
+        });
+
+        // Trace para los puntos individuales con hover mejorado
+        traces.push({
+            type: 'scatter',
+            mode: 'markers',
+            x: stat.values,
+            y: Array(stat.values.length).fill(idx),
+            name: stat.country,
+            marker: {
+                size: 6,
+                color: color,
+                opacity: 0.7,
+                line: { color: '#fff', width: 1 }
+            },
+            showlegend: false,
+            hovertemplate: `<b>${stat.country}</b><br>` +
+                `Elasticidad: %{x:.2f}<br>` +
+                `Mediana del país: ${stat.median.toFixed(2)}<br>` +
+                `Total observaciones: ${stat.count}<extra></extra>`
+        });
+    });
 
     // Crear línea vertical en x=1 para marcar desacoplamiento
     const shapes = [
         {
             type: 'line',
+            xref: 'x',
+            yref: 'paper',
             x0: 1,
             x1: 1,
-            y0: -0.5,
-            y1: countryStats.length - 0.5,
+            y0: 0,
+            y1: 1,
             line: {
                 color: '#4a9eff',
                 width: 2,
@@ -485,13 +503,15 @@ function renderRidgePlot() {
         },
         {
             type: 'line',
+            xref: 'x',
+            yref: 'paper',
             x0: 0,
             x1: 0,
-            y0: -0.5,
-            y1: countryStats.length - 0.5,
+            y0: 0,
+            y1: 1,
             line: {
-                color: '#888',
-                width: 2,
+                color: '#666',
+                width: 1,
                 dash: 'dot'
             }
         }
@@ -519,8 +539,12 @@ function renderRidgePlot() {
             ...PLOTLY_THEME.yaxis,
             title: { text: '', font: { size: 11 } },
             automargin: true,
+            type: 'category',
             categoryorder: 'array',
             categoryarray: countryStats.map(s => s.country),
+            tickmode: 'array',
+            tickvals: countryStats.map((s, i) => i),
+            ticktext: countryStats.map(s => s.country),
             tickfont: { size: 11, color: '#b0b0b0' }
         },
         height: Math.max(600, countryStats.length * 60),
@@ -530,28 +554,23 @@ function renderRidgePlot() {
         annotations: [
             {
                 x: 1,
-                y: 1.06,
+                y: 1.08,
                 xref: 'paper',
                 yref: 'paper',
-                text: '🟢 Verde = desacoplamiento  |  🟡 Amarillo = acoplamiento débil  |  🔴 Rojo = negativo',
+                text: 'Color verde = desacoplamiento  |  Amarillo = acoplamiento débil  |  Rojo = negativo',
                 showarrow: false,
-                font: { size: 10, color: '#888' },
+                font: { size: 10, color: '#999' },
                 xanchor: 'right'
             },
             {
                 x: 1,
-                y: -0.5,
+                y: 1.03,
                 xref: 'x',
                 yref: 'paper',
-                text: 'Desacoplamiento<br>relativo',
-                showarrow: true,
-                arrowhead: 2,
-                arrowsize: 1,
-                arrowwidth: 1,
-                arrowcolor: '#4a9eff',
-                ax: 30,
-                ay: 20,
-                font: { size: 10, color: '#4a9eff' }
+                text: '← Desacoplamiento relativo',
+                showarrow: false,
+                font: { size: 10, color: '#4a9eff', weight: 'bold' },
+                xanchor: 'left'
             }
         ]
     };
