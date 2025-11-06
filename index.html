@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MF-7: Análisis de Flujos de Materiales - UE & Mercosur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #121212;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+            border-bottom: 1px solid #2a2a2a;
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 4em;
+            margin-bottom: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            color: #888;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .version {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 20px;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 60px 40px;
+        }
+
+        .intro {
+            text-align: center;
+            margin-bottom: 60px;
+            color: #b0b0b0;
+            font-size: 1.15em;
+            line-height: 1.7;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .intro strong {
+            color: #4a9eff;
+            font-weight: 600;
+        }
+
+        .notebooks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .notebook-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 40px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notebook-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            transition: all 0.3s;
+        }
+
+        .notebook-card:nth-child(1)::before { background: #4a9eff; }
+        .notebook-card:nth-child(2)::before { background: #6bb3ff; }
+        .notebook-card:nth-child(3)::before { background: #8cc9ff; }
+
+        .notebook-card:hover {
+            transform: translateY(-8px);
+            border-color: #4a9eff;
+            box-shadow: 0 20px 40px rgba(74, 158, 255, 0.15);
+        }
+
+        .notebook-label {
+            display: inline-block;
+            background: #0f0f0f;
+            color: #4a9eff;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .notebook-title {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .notebook-subtitle {
+            font-size: 1.1em;
+            color: #888;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .notebook-desc {
+            font-size: 1em;
+            color: #b0b0b0;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .notebook-features {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .notebook-features li {
+            padding: 8px 0;
+            color: #a0a0a0;
+            font-size: 0.95em;
+            border-bottom: 1px solid #222;
+        }
+
+        .notebook-features li:last-child {
+            border-bottom: none;
+        }
+
+        .notebook-features li::before {
+            content: "→";
+            color: #4a9eff;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85em;
+            transition: all 0.3s;
+            background: #4a9eff;
+            color: #0a0a0a;
+            border: 1px solid #4a9eff;
+        }
+
+        .btn:hover {
+            background: #6bb3ff;
+            border-color: #6bb3ff;
+            box-shadow: 0 4px 20px rgba(74, 158, 255, 0.4);
+        }
+
+        .info-section {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 40px;
+            margin-top: 60px;
+        }
+
+        .info-section h2 {
+            color: #fff;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            font-weight: 700;
+            border-left: 3px solid #4a9eff;
+            padding-left: 15px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .info-item {
+            background: #0f0f0f;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+            transition: all 0.2s;
+        }
+
+        .info-item:hover {
+            border-color: #4a9eff;
+            background: #1a1a1a;
+        }
+
+        .info-item h3 {
+            color: #4a9eff;
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .info-item p {
+            color: #b0b0b0;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .navigation-guide {
+            margin-top: 30px;
+            padding: 30px;
+            background: #0f0f0f;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .navigation-guide h3 {
+            margin-bottom: 20px;
+            color: #fff;
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+
+        .navigation-guide p {
+            color: #b0b0b0;
+            line-height: 2;
+            font-size: 1em;
+        }
+
+        .navigation-guide strong {
+            color: #4a9eff;
+            font-weight: 600;
+        }
+
+        footer {
+            background: #0f0f0f;
+            border-top: 1px solid #2a2a2a;
+            padding: 40px;
+            text-align: center;
+            color: #666;
+        }
+
+        footer p {
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+
+        .tech-stack {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tech-badge {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #888;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.8em;
+            }
+
+            header {
+                padding: 60px 30px;
+            }
+
+            .content {
+                padding: 40px 20px;
+            }
+
+            .notebooks-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MF-7</h1>
+            <p class="subtitle">Análisis de Flujos de Materiales</p>
+            <p class="subtitle">Unión Europea & Mercosur (1970-2024)</p>
+            <p class="version">v2.0.0 | Octubre 2024 | Professional Edition</p>
+        </header>
+
+        <div class="content">
+            <div class="intro">
+                <p>Conjunto de <strong>3 notebooks interactivos</strong> para el análisis completo de Material Flow Analysis (MFA).</p>
+                <p>Visualiza, compara y analiza más de 50 años de datos de consumo de materiales y sostenibilidad.</p>
+            </div>
+
+            <div class="notebooks-grid">
+                <a href="MF-7a/index.html" class="notebook-card">
+                    <div class="notebook-label">MF-7a</div>
+                    <h2 class="notebook-title">Exploración de Datos</h2>
+                    <p class="notebook-subtitle">Data Exploration & Statistics</p>
+                    <p class="notebook-desc">Explora y filtra los datos MFA con estadísticas descriptivas y visualizaciones profesionales.</p>
+                    <ul class="notebook-features">
+                        <li>Selección de región y países</li>
+                        <li>Filtrado por indicadores</li>
+                        <li>Distribuciones y box plots</li>
+                        <li>Tabla interactiva de datos</li>
+                    </ul>
+                    <div class="btn">Explorar Datos</div>
+                </a>
+
+                <a href="MF-7b/index.html" class="notebook-card">
+                    <div class="notebook-label">MF-7b</div>
+                    <h2 class="notebook-title">Paneles Temporales</h2>
+                    <p class="notebook-subtitle">Time Series Analysis</p>
+                    <p class="notebook-desc">Series temporales por país con normalización, suavizado y paneles apilados estilo Observable.</p>
+                    <ul class="notebook-features">
+                        <li>Small multiples con escala compartida</li>
+                        <li>Paneles apilados por país</li>
+                        <li>4 modos de normalización</li>
+                        <li>Suavizado de series temporales</li>
+                    </ul>
+                    <div class="btn">Ver Paneles</div>
+                </a>
+
+                <a href="MF-7c/index.html" class="notebook-card">
+                    <div class="notebook-label">MF-7c</div>
+                    <h2 class="notebook-title">Análisis Tapio</h2>
+                    <p class="notebook-subtitle">Decoupling Analysis</p>
+                    <p class="notebook-desc">Análisis sofisticado de desacoplamiento entre uso de materiales y variables económicas/ambientales.</p>
+                    <ul class="notebook-features">
+                        <li>8 categorías de desacoplamiento</li>
+                        <li>Ridge plots de elasticidades</li>
+                        <li>Matriz de transición de estados</li>
+                        <li>Evolución temporal Tapio</li>
+                    </ul>
+                    <div class="btn">Analizar Tapio</div>
+                </a>
+            </div>
+
+            <div class="info-section">
+                <h2>Información del Proyecto</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h3>Datos Incluidos</h3>
+                        <p>3.4 MB de datos con 6,745 registros de países de la UE y Mercosur desde 1970 hasta 2024.</p>
+                    </div>
+                    <div class="info-item">
+                        <h3>Indicadores</h3>
+                        <p>MF, DMC, GDP, Población y más de 50 indicadores de flujos de materiales y drivers económicos.</p>
+                    </div>
+                    <div class="info-item">
+                        <h3>Regiones</h3>
+                        <p>27 países de la Unión Europea y 4 países del Mercosur (Argentina, Brazil, Uruguay, Paraguay).</p>
+                    </div>
+                    <div class="info-item">
+                        <h3>Tecnología</h3>
+                        <p>HTML5, CSS3, JavaScript ES6+, Plotly.js y D3.js para visualizaciones interactivas avanzadas.</p>
+                    </div>
+                </div>
+
+                <div class="navigation-guide">
+                    <h3>Navegación Recomendada</h3>
+                    <p>
+                        <strong>1. MF-7a</strong> → Familiarízate con los datos y explora indicadores disponibles<br>
+                        <strong>2. MF-7b</strong> → Visualiza tendencias temporales y compara países con paneles apilados<br>
+                        <strong>3. MF-7c</strong> → Análisis profundo de sostenibilidad y desacoplamiento Tapio
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>MF-7: Material Flow Analysis</strong></p>
+            <p>Unión Europea & Mercosur | 1970-2024 | Professional Edition</p>
+            <div class="tech-stack">
+                <span class="tech-badge">HTML5</span>
+                <span class="tech-badge">CSS3</span>
+                <span class="tech-badge">JavaScript ES6+</span>
+                <span class="tech-badge">Plotly.js</span>
+                <span class="tech-badge">D3.js</span>
+                <span class="tech-badge">Responsive Design</span>
+            </div>
+            <p style="margin-top: 25px; font-size: 0.9em; color: #555;">
+                Generated with Claude Code
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

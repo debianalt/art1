@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MF-7c: Análisis de Desacoplamiento Tapio</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: #121212;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+            border-bottom: 1px solid #2a2a2a;
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 25px 40px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #b0b0b0;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select, input {
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            background: #0f0f0f;
+            color: #e0e0e0;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+        }
+
+        .range-value {
+            display: inline-block;
+            background: #2a2a2a;
+            color: #4a9eff;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 700;
+            margin-left: 8px;
+            border: 1px solid #333;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .chart-container {
+            margin: 40px 0;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #fff;
+            border-left: 3px solid #4a9eff;
+            padding-left: 15px;
+        }
+
+        .info-box {
+            background: #1a1a1a;
+            border-left: 3px solid #4a9eff;
+            padding: 25px;
+            border-radius: 6px;
+            margin: 30px 0;
+            border: 1px solid #2a2a2a;
+        }
+
+        .info-box h3 {
+            color: #4a9eff;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .info-box p {
+            color: #b0b0b0;
+            line-height: 1.7;
+        }
+
+        .info-box a {
+            color: #4a9eff;
+            text-decoration: none;
+            border-bottom: 1px solid #4a9eff;
+        }
+
+        .tapio-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 25px 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #0f0f0f;
+            border-radius: 6px;
+            border: 1px solid #2a2a2a;
+            transition: all 0.2s;
+        }
+
+        .legend-item:hover {
+            border-color: #4a9eff;
+            background: #1a1a1a;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #333;
+        }
+
+        .legend-text {
+            flex: 1;
+        }
+
+        .legend-label {
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #fff;
+        }
+
+        .legend-desc {
+            font-size: 0.7em;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        footer {
+            background: #0f0f0f;
+            border-top: 1px solid #2a2a2a;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.1em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MF-7c: Análisis de Desacoplamiento Tapio</h1>
+            <p class="subtitle">Relación entre consumo de materiales y drivers económicos/ambientales</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="regionSelect">Región</label>
+                <select id="regionSelect">
+                    <option value="UE">Unión Europea</option>
+                    <option value="Mercosur" selected>Mercosur</option>
+                    <option value="Ambos">Ambas</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="flowSelect">Indicador Material</label>
+                <select id="flowSelect">
+                    <option value="loading">Cargando...</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="driverSelect">Variable Driver</label>
+                <select id="driverSelect">
+                    <option value="loading">Cargando...</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="tolerance">Tolerancia <span class="range-value" id="toleranceValue">0.2</span></label>
+                <input type="range" id="tolerance" min="0.1" max="0.5" value="0.2" step="0.05">
+            </div>
+
+            <div class="control-group">
+                <label for="yearStart">Año inicio <span class="range-value" id="yearStartValue">1990</span></label>
+                <input type="range" id="yearStart" min="1970" max="2023" value="1990" step="1">
+            </div>
+
+            <div class="control-group">
+                <label for="yearEnd">Año fin <span class="range-value" id="yearEndValue">2024</span></label>
+                <input type="range" id="yearEnd" min="1971" max="2024" value="2024" step="1">
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <h3>Metodología Tapio de Desacoplamiento</h3>
+                <p>El <strong>análisis Tapio</strong> mide la elasticidad entre el cambio en el consumo de materiales y el cambio en una variable driver (PIB, población, etc.). Identifica 8 estados de desacoplamiento basados en la dirección y magnitud de los cambios.</p>
+                <p style="margin-top: 12px;"><strong>Navegación:</strong> <a href="../MF-7a/">MF-7a</a> → <a href="../MF-7b/">MF-7b</a> → <strong>MF-7c (Tapio)</strong></p>
+            </div>
+
+            <div class="tapio-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #27ae60;"></div>
+                    <div class="legend-text">
+                        <div class="legend-label">Strong Decoupling</div>
+                        <div class="legend-desc">Material ↓ Driver ↑</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #2ecc71;"></div>
+                    <div class="legend-text">
+                        <div class="legend-label">Weak Decoupling</div>
+                        <div class="legend-desc">Ambos ↑ Material < Driver</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f39c12;"></div>
+                    <div class="legend-text">
+                        <div class="legend-label">Expansive Coupling</div>
+                        <div class="legend-desc">Ambos ↑ Material ≈ Driver</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e67e22;"></div>
+                    <div class="legend-text">
+                        <div class="legend-label">Expansive Negative</div>
+                        <div class="legend-desc">Ambos ↑ Material > Driver</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <div class="legend-text">
+                        <div class="legend-label">Strong Negative</div>
+                        <div class="legend-desc">Material ↑ Driver ↓</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #c0392b;"></div>
+                    <div class="legend-text">
+                        <div class="legend-label">Weak Negative</div>
+                        <div class="legend-desc">Ambos ↓ Material > Driver</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #7f8c8d;"></div>
+                    <div class="legend-text">
+                        <div class="legend-label">Recessive Coupling</div>
+                        <div class="legend-desc">Ambos ↓ Material ≈ Driver</div>
+                    </div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #34495e;"></div>
+                    <div class="legend-text">
+                        <div class="legend-label">Recessive Decoupling</div>
+                        <div class="legend-desc">Ambos ↓ Material < Driver</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2 class="section-title">Dispersión: Tasa Material vs Tasa Driver</h2>
+                <div id="scatterPlot"></div>
+            </div>
+
+            <div class="chart-container">
+                <h2 class="section-title">Evolución temporal por país (Timeline)</h2>
+                <div id="tapioTimeline"></div>
+            </div>
+
+            <div class="chart-container">
+                <h2 class="section-title">Ridge Plot: Distribución de elasticidades por país</h2>
+                <div id="ridgePlot"></div>
+            </div>
+
+            <div class="chart-container">
+                <h2 class="section-title">Matriz de transición entre estados</h2>
+                <div id="transitionMatrix"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>MF-7c</strong> | Material Flow Analysis | Análisis Tapio</p>
+            <p>Metodología: Tapio (2005) - Degrees of Decoupling</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
